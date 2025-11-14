@@ -1,0 +1,210 @@
+---
+title: "Class05: data viz with ggplot"
+author: "Shazreh Hassan (PID: A13743949)"
+format: pdf
+---
+
+
+Today we are playing with plotting and graphics in R.
+
+There are lots of ways to make figures in R.
+
+**"base" R graphics** (`plot()`, `hist()`), `boxplot()`, etc.)
+
+Add on packages include **ggplot**
+
+```{r}
+head(cars)
+```
+
+Let's plot this with "base" R:
+
+```{r}
+plot(cars)
+```
+
+```{r}
+head(mtcars)
+```
+
+Let's plot mpg vs disp:
+
+```{r}
+#pch of 16 gives filled circles
+plot(mtcars$mpg, mtcars$disp, pch=16)
+```
+
+Histogram of mpg:
+
+```{r}
+hist(mtcars$mpg)
+```
+
+## GGPLOT
+
+The main function in the ggplot2 is **ggplot()**. The **ggplot2** package needs to be installed. Any package can be installed with the function `install.packages()`. 
+
+> Do NOT run this in the quarto document, run it in console!
+
+```{r}
+library(ggplot2)
+
+ggplot(cars)+
+  aes(x=speed, y=dist)+
+  geom_point()
+```
+
+```{r}
+ggplot(cars)+
+  aes(speed)+
+  geom_histogram()
+```
+
+Every ggplot needs at least 3 things:
+
+- the **data** (given with `ggplot(cars)`)
+- the **aesthetic** mapping (given with `aes()`)
+- the **geom** (given by `geom_point()`)
+
+> For simple canned graphs, "base" R is almost always faster
+
+### Adding more layers
+
+Let's add a line and a title, subtitle, and caption as well as axis labels:
+```{r}
+ggplot(cars)+
+  aes(x=speed, y=dist)+
+  geom_point()+ 
+  geom_smooth(method="lm", se=FALSE)+
+  labs(title = "Speed vs distance", 
+       x = "Speed (mph)", 
+       y = "Distance (ft)",
+       caption = "when is tea time anyway??")+
+  theme_bw()
+```
+
+```{r}
+url <- "https://bioboot.github.io/bimm143_S20/class-material/up_down_expression.txt"
+genes <- read.delim(url)
+head(genes)
+```
+
+>Q1. How many genes are in this wee dataset?
+
+There are `r nrow(genes)` in this dataset
+
+>Q2. How many "up" regulated genes are there?
+
+```{r}
+sum(genes$State == "up")
+```
+
+There are `r sum(genes$State == "up")` UP genes
+
+```{r}
+table(genes$State)
+```
+
+Make a plot of Condition 1 vs Condition 2, with different states being different colors:
+
+Attempt 1:
+```{r}
+ggplot(genes)+
+  aes(x=Condition1, y=Condition2, col=Condition2)+
+  geom_point()
+```
+
+Attempt 2:
+```{r}
+p <- ggplot(genes)+
+  aes(x=Condition1, y=Condition2, col=State)+
+  geom_point()+
+  scale_color_manual(values=c("purple", "gray", "blue"))
+
+p
+```
+
+Now that you saved the plot, you can modify it. Add a title:
+
+```{r}
+p + labs(title="look at me")
+```
+
+Silly example of adding labels:
+
+```{r}
+ggplot(genes)+
+  aes(x=Condition1, y=Condition2, col=State, label=Gene)+
+  geom_point()+
+  scale_color_manual(values=c("purple", "gray", "blue"))+
+  geom_text()
+```
+
+Use ggrepel to put spaces between labels:
+
+```{r}
+library(ggrepel)
+ggplot(genes)+
+  aes(x=Condition1, y=Condition2, col=State, label=Gene)+
+  geom_point()+
+  scale_color_manual(values=c("purple", "gray", "blue"))+
+  geom_text_repel(max.overlaps = 60)+
+  theme_bw()
+
+aes()
+```
+
+## Combining Plots
+
+```{r}
+url <- "https://raw.githubusercontent.com/jennybc/gapminder/master/inst/extdata/gapminder.tsv"
+
+gapminder <- read.delim(url)
+head(gapminder)
+```
+
+```{r}
+tail(gapminder)
+```
+
+Plot GDP per capita vs life expectancy:
+```{r}
+#alpha changes transparency - might want to change when there's a lot of overlap in points
+ggplot(gapminder)+
+  aes(x=gdpPercap, y=lifeExp, col=continent)+
+  geom_point(alpha=0.2)+
+  facet_wrap(~continent)+
+  theme_bw()
+```
+
+Changing point size to scale with population size:
+
+```{r}
+ggplot(gapminder)+
+  aes(x=gdpPercap, y=lifeExp, col=continent, size=pop)+
+  geom_point(alpha=0.2)+
+  facet_wrap(~continent)+
+  theme_bw()
+```
+
+## Bar Chart Practice
+
+Filter for the top 5 countries by population in 2007:
+```{r}
+library(dplyr)
+
+gapminder_top5 <- gapminder %>% 
+  filter(year==2007) %>% 
+  arrange(desc(pop)) %>% 
+  top_n(5, pop)
+
+gapminder_top5
+```
+Bar chart showing population for these countries:
+
+```{r}
+ggplot(gapminder_top5)+
+  aes(country, pop)+
+  geom_col()
+```
+
