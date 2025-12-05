@@ -1,7 +1,7 @@
 ---
 title: "Class05: data viz with ggplot"
 author: "Shazreh Hassan (PID: A13743949)"
-format: pdf
+format: gfm
 ---
 
 
