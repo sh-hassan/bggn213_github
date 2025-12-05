@@ -11,7 +11,7 @@ should be.
 hist(rnorm(1000))
 ```
 
-![](class07_files/figure-commonmark/unnamed-chunk-1-1.png)
+![](Class07_files/figure-commonmark/unnamed-chunk-1-1.png)
 
 ``` r
 x <- c(rnorm(30,mean=-3),rnorm(30, mean=3))
@@ -22,12 +22,12 @@ head(x)
 ```
 
                  x        y
-    [1,] -2.399974 3.282015
-    [2,] -2.144117 2.917248
-    [3,] -4.066335 4.012487
-    [4,] -3.641140 2.438093
-    [5,] -2.316879 2.604188
-    [6,] -3.815633 3.213341
+    [1,] -1.822656 2.897251
+    [2,] -2.154566 1.630337
+    [3,] -3.281968 4.211402
+    [4,] -2.707168 3.226761
+    [5,] -3.457239 3.704995
+    [6,] -3.744183 2.875680
 
 Peak at x with `plot()`
 
@@ -35,7 +35,7 @@ Peak at x with `plot()`
 plot(x)
 ```
 
-![](class07_files/figure-commonmark/unnamed-chunk-3-1.png)
+![](Class07_files/figure-commonmark/unnamed-chunk-3-1.png)
 
 The main function in “base” R for K-means clustering is called
 `kmeans()`. - requires x and centers arguments
@@ -49,16 +49,16 @@ k
 
     Cluster means:
               x         y
-    1  3.238310 -3.231164
-    2 -3.231164  3.238310
+    1  2.803388 -3.291333
+    2 -3.291333  2.803388
 
     Clustering vector:
      [1] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1 1
     [39] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 
     Within cluster sum of squares by cluster:
-    [1] 60.49366 60.49366
-     (between_SS / total_SS =  91.2 %)
+    [1] 74.30024 74.30024
+     (between_SS / total_SS =  88.2 %)
 
     Available components:
 
@@ -90,7 +90,7 @@ plot(x, col=k$cluster)
 points(k$centers, col="blue", pch=15)
 ```
 
-![](class07_files/figure-commonmark/unnamed-chunk-7-1.png)
+![](Class07_files/figure-commonmark/unnamed-chunk-7-1.png)
 
 > Q. Now make 4 clusters instead of 2 and plot:
 
@@ -100,7 +100,7 @@ plot(x, col=k4$cluster)
 points(k4$centers, col="blue", pch=15)
 ```
 
-![](class07_files/figure-commonmark/unnamed-chunk-8-1.png)
+![](Class07_files/figure-commonmark/unnamed-chunk-8-1.png)
 
 > Q. Run kmeans with values centered (i.e. values of k) equal 1 to 6.
 
@@ -118,7 +118,7 @@ for(i in 1:6) {
 ans
 ```
 
-    [1] 1376.61030  120.98733  105.97105   68.71187   67.44201   72.75860
+    [1] 1262.96940  148.60049  115.65825  103.13781   70.19557   58.20825
 
 Make a “scree-plot”
 
@@ -126,7 +126,7 @@ Make a “scree-plot”
 plot(ans, type="b")
 ```
 
-![](class07_files/figure-commonmark/unnamed-chunk-10-1.png)
+![](Class07_files/figure-commonmark/unnamed-chunk-10-1.png)
 
 - the inflection point at 2 shows us where the minimum number of
   clusters are needed for a small sum of squares - the scree point
@@ -162,7 +162,7 @@ plot(hc)
 abline(h=7, col="red")
 ```
 
-![](class07_files/figure-commonmark/unnamed-chunk-12-1.png)
+![](Class07_files/figure-commonmark/unnamed-chunk-12-1.png)
 
 - height is a measure of the distance that things are joined together
 
@@ -182,7 +182,7 @@ grps
 plot(x, col=grps)
 ```
 
-![](class07_files/figure-commonmark/unnamed-chunk-14-1.png)
+![](Class07_files/figure-commonmark/unnamed-chunk-14-1.png)
 
 ## Principal component analysis
 
@@ -250,7 +250,7 @@ multiple times removes multiple columns.
 barplot(as.matrix(y), beside=T, col=rainbow(nrow(y)))
 ```
 
-![](class07_files/figure-commonmark/unnamed-chunk-18-1.png)
+![](Class07_files/figure-commonmark/unnamed-chunk-18-1.png)
 
 > Q3: Changing what optional argument in the above barplot() function
 > results in the following plot?
@@ -259,7 +259,7 @@ barplot(as.matrix(y), beside=T, col=rainbow(nrow(y)))
 barplot(as.matrix(y), beside=FALSE, col=rainbow(nrow(y)))
 ```
 
-![](class07_files/figure-commonmark/unnamed-chunk-19-1.png)
+![](Class07_files/figure-commonmark/unnamed-chunk-19-1.png)
 
 ans: beside=FALSE (the default)
 
@@ -271,7 +271,7 @@ ans: beside=FALSE (the default)
 pairs(y, col=rainbow(10), pch=16)
 ```
 
-![](class07_files/figure-commonmark/unnamed-chunk-20-1.png)
+![](Class07_files/figure-commonmark/unnamed-chunk-20-1.png)
 
 ans: Each plot is a pairwise scatterplot between two countries. The
 country on each axis is the name written within the same column (for x)
@@ -335,7 +335,7 @@ ggplot(pca$x) +
   geom_text()
 ```
 
-![](class07_files/figure-commonmark/unnamed-chunk-23-1.png)
+![](Class07_files/figure-commonmark/unnamed-chunk-23-1.png)
 
 Another major result out of PCA is the so-called “variable loadings” or
 `$rotation` that tells us how the original variables (foods) contribute
@@ -348,4 +348,4 @@ ggplot(pca$rotation) +
   geom_col()
 ```
 
-![](class07_files/figure-commonmark/unnamed-chunk-24-1.png)
+![](Class07_files/figure-commonmark/unnamed-chunk-24-1.png)
