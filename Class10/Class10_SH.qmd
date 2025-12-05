@@ -1,0 +1,232 @@
+---
+title: "Class10: Halloween Mini-Project"
+author: "Shazreh Hassan (PID: A13743949)"
+format: pdf
+---
+
+## Importing candy data
+
+```{r}
+candy_file <- read.csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/candy-power-ranking/candy-data.csv")
+
+candy <- read.csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/candy-power-ranking/candy-data.csv", row.names=1)
+head(candy)
+```
+```{r}
+flextable:: flextable(head(candy))
+```
+
+>Q1. How many different candy types are in this dataset?
+
+```{r, message=FALSE}
+library(dplyr)
+nrow(candy)
+```
+
+>Q2. How many fruity candy types are in the dataset?
+
+```{r}
+sum(candy$fruity)
+```
+
+## What is your favorite candy?
+
+>Q3. What is your favorite candy in the dataset and what is it’s winpercent value?
+
+```{r}
+#favorite candy: Junior Mints
+
+candy["Junior Mints", ]$winpercent
+```
+
+>Q4. What is the winpercent value for “Kit Kat”?
+
+```{r}
+candy["Kit Kat", ]$winpercent
+```
+
+>Q5. What is the winpercent value for “Tootsie Roll Snack Bars”?
+
+```{r}
+candy["Tootsie Roll Snack Bars", ]$winpercent
+```
+
+```{r}
+library("skimr")
+skim(candy)
+```
+
+
+>Q6. Is there any variable/column that looks to be on a different scale to the majority of the other columns in the dataset?
+
+winpercent looks like it is on a 1-100 scale while the others are 0-1
+
+
+>Q7. What do you think a zero and one represent for the candy$chocolate column?
+
+Zero means the candy does not have chocolate, and 1 means it does.
+
+
+>Q8. Plot a histogram of winpercent values
+
+```{r}
+library(ggplot2)
+
+ggplot(candy)+
+  aes(winpercent)+
+  geom_histogram(bins=20)
+```
+
+
+>Q9. Is the distribution of winpercent values symmetrical?
+
+```{r}
+#density plot
+
+ggplot(candy)+
+  aes(winpercent)+
+  geom_density()
+
+```
+No, it looks skewed to the left of the 50% mark.
+
+>Q10. Is the center of the distribution above or below 50%?
+
+```{r}
+summary(candy$winpercent)
+```
+
+The center of the distribution is below 50%.
+
+>Q11. On average is chocolate candy higher or lower ranked than fruit candy?
+
+```{r}
+# 1. find all chocolate candy in the dataset
+ind.choc <- candy$chocolate==1
+choc.candy <- candy[ind.choc,]
+
+# 2. extract their winpercent values
+choc.win <- choc.candy$winpercent
+
+# 3. find the mean of these values
+choc.mean <- mean(choc.win)
+
+# 4-6. do the same for fruity candy
+fruit.win <- candy[candy$fruity==1,]$winpercent
+fruit.mean <- mean(fruit.win)
+
+# 7. which mean value is higher?
+choc.mean
+fruit.mean
+```
+
+Chocolate is higher ranked
+
+>Q12. Is this difference statistically significant?
+
+
+```{r}
+t.test(choc.win, fruit.win)
+```
+
+Yes, this difference is statistically significant.
+
+## Overall candy rankings
+
+>Q13. What are the five least liked candy types in this set?
+
+```{r}
+ord.ind <- order(candy$winpercent)
+head(candy[ord.ind,], 5)
+```
+
+
+>Q14. What are the top 5 all time favorite candy types out of this set?
+
+```{r}
+tail(candy[ord.ind,], 5)
+```
+
+>Q15. Make a first barplot of candy ranking based on winpercent values.
+
+```{r}
+ggplot(candy)+
+  aes(winpercent, reorder(rownames(candy),winpercent))+
+  geom_col()
+```
+
+Add some color
+
+```{r}
+mycols <- rep("black", nrow(candy))
+mycols[candy$chocolate==1] <- "chocolate"
+mycols[candy$bar==1] <- "brown"
+mycols[candy$fruity==1] <- "red"
+  
+ggplot(candy)+
+  aes(winpercent, reorder(rownames(candy),winpercent))+
+  geom_col(fill=mycols)
+```
+
+## Winpercent vs Pricepercent
+
+```{r}
+library(ggrepel)
+
+ggplot(candy)+
+  aes(winpercent, pricepercent, label=rownames(candy))+
+  geom_point(col=mycols)+
+  geom_text_repel(col=mycols, size=3, max.overlaps = 5)
+```
+
+
+
+## Exploring the correlation structure
+
+```{r}
+cij <- cor(candy)
+```
+
+```{r}
+library(corrplot)
+
+corrplot(cij)
+
+```
+
+
+## Principal component analysis
+
+The main function in base R for this is `prcomp()` and we want to seet `scale=TRUE` here:
+
+```{r}
+pca <- prcomp(candy, scale=TRUE)
+summary(pca)
+```
+
+Let's visualize our first main result figure - the PC plot or PC1 vs PC2
+
+```{r}
+ggplot(pca$x)+
+  aes(PC1, PC2, label=rownames(pca$x))+
+  geom_point(col=mycols)+
+  geom_text_repel(col=mycols)+
+  labs(title="Shaz's candy space map")
+```
+
+Don't forget about your variable "loadings" - how the original variables contribute to your new PCs...
+
+```{r}
+ggplot(pca$rotation)+
+  aes(PC1, rownames(pca$rotation))+
+  geom_col()
+```
+
+
+
+
+
+
+
+
+

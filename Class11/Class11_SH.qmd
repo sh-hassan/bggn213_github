@@ -1,0 +1,92 @@
+---
+title: "Class 11: Protein Structure Prediction with Alphafold2"
+author: "Shazreh Hassan (PID: A13743949)"
+format: pdf
+toc: true
+---
+
+## Background
+
+We saw last day that the PDB has 209,886 entries (Oct/Nov 2025). UniProtKB (i.e. protein
+sequence database) has 199,579,901 entries.
+
+```{r}
+209886/199579901*100
+```
+
+The PDB has only 0.1% coverage of the main sequence database.
+Enter AlphaFold database (AFDB). < https://alphafold.ebi.ac.uk/ > that attempts to provide
+computed models for all sequences in UniProt.
+“AlphaFold DB provides open access to over 200 million protein structure predictions to accel-
+erate scientific research.”
+
+
+## Alphafold
+
+AlphaFold has 3 main outputs:
+
+1) The predicted coordinates (PDB files)
+2) A local quality score plDDT (one for each amino-acid)
+3) A second quality score Predicted Aligned Error PAE (for each pair of amino-acids)
+
+We can run AlphaFold ourselves if we are not happy with AFDB (could be no coverage or poor model)
+
+
+
+## Interpreting/analyzing alphafold results in R
+
+```{r}
+results_dir <- "HIV_pr_94b5b/"
+```
+
+```{r}
+pdb_files <- list.files(path=results_dir,
+pattern="*.pdb",
+full.names = TRUE)
+
+basename(pdb_files)
+```
+
+```{r}
+library(bio3d)
+
+pdbs <- pdbaln(pdb_files, fit=TRUE, exefile="msa")
+```
+
+```{r}
+## library(bio3dview)
+## view.pdbs(pdbs)
+```
+
+## Alignment file
+
+```{r}
+aln_file <- list.files(path=results_dir,
+                       pattern=".a3m$",
+                       full.names=TRUE)
+
+aln_file
+```
+
+```{r}
+aln <- read.fasta(aln_file[1], to.upper=TRUE)
+```
+
+```{r}
+sim <- conserv(aln)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

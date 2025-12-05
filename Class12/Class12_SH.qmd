@@ -1,0 +1,367 @@
+---
+title: "Class 12"
+author: "Shazreh Hassan (PID A13743949)"
+format: pdf
+toc: true
+---
+
+## Background
+
+Today we will analyze some RNASeq data from Himes et al. on the effects of a common steroid (dexamethasone also called "dex") on airway smooth muscle cells (ASMs).
+
+For this analysus we need two main inputs
+
+- `countData`: a table of counts per gene (in rows) across experiments (in collumns)
+- `colData`: **metadata** about the design of the experiments. The rows must match the columns in `countData`
+
+## Data Import
+
+```{r}
+counts <- read.csv("airway_scaledcounts.csv", row.names=1)
+metadata <- read.csv("airway_metadata.csv")
+```
+
+
+```{r}
+head(counts)
+```
+
+```{r}
+head(metadata)
+```
+
+
+> Q1. How many "genes" are in this dataset?
+
+```{r}
+nrow(counts)
+```
+
+> Q2. How many experiments (i.e columns in `counts` or rows in `metadata`) are there?
+
+```{r}
+ncol(counts)
+```
+
+> Q3 (Q2 in lab sheet). How many "control" experiments are there in this dataset?
+
+```{r}
+sum(metadata$dex == "control")
+```
+
+## Toy analysis example
+
+1. Extract the "control" columns from `counts`
+2. Calculate the mean value for each gene in these "control" columns
+
+3-4. Do the same for the "treated" columns
+5. Compare these mean values for each gene
+
+Step 1.
+```{r}
+control.inds <- metadata$dex == "control"
+control.counts <- counts[ , control.inds]
+head(control.counts)
+```
+
+Step 2.
+```{r}
+control.mean <- rowMeans(control.counts)
+```
+
+Q4: 
+
+Step3.
+```{r}
+treated.inds <- metadata$dex == "treated"
+treated.counts <- counts[ , treated.inds]
+head(treated.counts)
+```
+
+Step 4.
+```{r}
+treated.mean <- rowMeans(treated.counts)
+```
+
+For ease of book-keeping, we can store these together in one data frame called `meancounts`
+
+```{r}
+meancounts <- data.frame(control.mean, treated.mean)
+head(meancounts)
+```
+Q5: Step 5. Plot these against each other
+
+```{r}
+library(ggplot2)
+
+ggplot(meancounts)+
+  aes(control.mean, treated.mean)+
+  geom_point(alpha=0.3)
+```
+
+Q6.
+
+```{r}
+#use log scale for both axes
+ggplot(meancounts)+
+  aes(control.mean, treated.mean)+
+  geom_point(alpha=0.3)+
+  scale_x_log10()+
+  scale_y_log10()
+```
+
+We used "fold-change" as a way to compare 
+- we usually use log2 units for fold change 
+
+
+```{r}
+#treated/control
+log2(10/10)
+log2(20/10)
+log2(10/20)
+
+log2(40/10)
+```
+
+```{r}
+meancounts$log2fc <-  log2(meancounts$treated.mean/meancounts$control.mean)
+
+head(meancounts)
+```
+
+A common "rule-of-thumb" threshold for calling something "up" regulated is a log2-fold change of +2 or greater. For "down" regulated the log2-fold change is -2 or less.
+
+
+```{r}
+#filter out the NaNs and -inf values
+nonzero.inds <- rowSums(counts) !=0
+mycounts <-  meancounts[nonzero.inds,]
+
+```
+
+```{r}
+#alternate method
+zero.inds <- which(meancounts[,1:2]==0, arr.ind=T)[,1]
+
+mygenes <- meancounts[-zero.inds,]
+```
+
+> Q7. What is the purpose of the arr.ind argument in the which() function call above? Why would we then take the first column of the output and need to call the unique() function?
+
+The arr.ind=TRUE allows us to get the row and column indeces where there are zero counts. We only need the row answer since that represents genes that have zero counts. The unique() function prevents rows from being counted twice if there is more than one zero within it.
+
+> Q8. How many genes are "up" regulated at the +2 log2FC threshold?
+
+```{r}
+sum(mygenes$log2fc >= 2)
+```
+
+
+> Q9. How many genes are "down" regulated at the -2 log2FC threshold?
+
+```{r}
+sum(mygenes$log2fc <= -2)
+```
+
+> Q10. Do you trust these results?
+
+I do not trust these numbers until we have seen whether the difference is statistically significant.
+
+
+## DESeq analysis
+
+Let's do this with DESeq2 and put some stats behind these numbers.
+
+```{r, message=FALSE}
+library(DESeq2)
+```
+
+
+DESeq wants 3 things for analyis:
+1. countData
+2. colData
+3. design
+
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = counts,
+                       colData = metadata,
+                       design = ~dex)
+```
+
+The main function in the DESeq package to run analysis is called `DESeq()`.
+
+```{r}
+dds <- DESeq(dds)
+```
+```{r}
+res <-  results(dds)
+res
+```
+
+Note: the padj is corrected for multiple testing
+
+## Volcano plot
+
+This is a plot of log2FC vs adjusted p-value
+
+```{r}
+ggplot(res)+
+  aes(log2FoldChange, padj)+
+  geom_point()
+```
+
+We care about the small p-values, so let's take the log
+
+```{r}
+plot(res$log2FoldChange, -log(res$padj))
+abline(v=c(-2,2), col="red")
+abline(h=-log(0.05), col="red")
+  
+```
+
+## A nicer ggplot volcano plot
+
+```{r}
+mycols <-  rep("gray", nrow(res))
+
+#makes points that have logFC above or below 2 blue
+mycols[abs(res$log2FoldChange) > 2] <- "blue"
+
+#make the points that are not significant gray
+mycols[res$padj >= 0.05] <- "gray"
+
+ggplot(res)+
+  aes(log2FoldChange, log10(padj))+
+  geom_point(col=mycols)+
+  scale_y_reverse()
+```
+
+
+## Save our results
+
+```{r}
+write.csv(res, file="myresults.csv")
+```
+
+
+## Add annotation data
+
+We need to add gene symbols, gene names, and other database ids to make my results useful for further analysis.
+
+```{r}
+head(res)
+```
+
+The ENS... names are ENSEMBLE entries in the `res` object. We can look these up using the bioconductor package in an automated way
+
+
+```{r}
+head(rownames(res))
+```
+
+
+We can use the `mapIds()` function from bioconductor package 
+
+
+```{r}
+library("AnnotationDbi")
+library("org.Hs.eg.db")
+```
+
+Let's see what database id formats we can translate between
+
+```{r}
+columns(org.Hs.eg.db)
+```
+
+```{r}
+res$symbol <-  mapIds(org.Hs.eg.db,
+                      keys=row.names(res),  #our genenames
+                      keytype="ENSEMBL",    #format of our genenames
+                      column="SYMBOL",      #the new format we want to add
+                      multiVals="first")
+```
+```{r}
+head(res$symbol)
+```
+
+Add `GENENAME` and then `ENTREZID`
+
+```{r}
+#adding genenames
+res$genename <-  mapIds(org.Hs.eg.db,
+                      keys=row.names(res),  #our genenames
+                      keytype="ENSEMBL",    #format of our genenames
+                      column="GENENAME")      #the new format we want to add
+```
+
+
+```{r}
+#adding ENTREZID
+res$entrezid <-  mapIds(org.Hs.eg.db,
+                      keys=row.names(res),  #our genenames
+                      keytype="ENSEMBL",    #format of our genenames
+                      column="ENTREZID")      #the new format we want to add
+```
+
+
+```{r}
+head(res)
+```
+
+## Save my annotated results
+
+```{r}
+write.csv(res, file="myresults_annotated.csv")
+```
+
+We will use the **gage** function from bioconductor.
+
+```{r}
+library(gage)
+library(gageData)
+library(pathview)
+```
+
+What **gage** wants as input is a named vector of importance i.e. a vector with labeled fold-changes.
+
+```{r}
+
+foldchanges = res$log2FoldChange
+names(foldchanges) = res$entrez
+head(foldchanges)
+```
+
+Run gage analysis:
+
+```{r}
+data(kegg.sets.hs)
+keggres = gage(foldchanges, gsets=kegg.sets.hs)
+```
+
+
+What is in the results:
+
+```{r}
+attributes(keggres)
+```
+
+
+```{r}
+head(keggres$less, 5)
+```
+
+Let's just look at one of these, hsa05310:
+
+```{r, message=FALSE}
+
+pathview(gene.data=foldchanges, pathway.id="hsa05310")
+```
+
+
+Insert figure for this pathway
+
+![Asthma pathway from KEGG with my differentially expressed genes highlighted](hsa05310.pathview.png)
+
+
+
